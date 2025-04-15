@@ -25,6 +25,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Debug files in directory
+      run: |
+        echo "Listing all Python files:"
+        find . -name "*.py" -type f
+        echo "Listing all files in current directory:"
+        ls -la
+
     - name: Debug Google API Authentication
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
@@ -35,7 +42,7 @@ jobs:
         python debug_auth.py
       continue-on-error: true
 
-    - name: Run enhanced newsletter agent
+    - name: Run newsletter agent
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         DOCUMENT_ID: ${{ secrets.DOCUMENT_ID }}
@@ -44,7 +51,7 @@ jobs:
         PYTHONVERBOSE: 1
       run: |
         echo "Running newsletter agent..."
-        python enhanced_newsletter_agent.py
+        python newsletter_agent.py
       
     - name: Record run outcome
       run: |
