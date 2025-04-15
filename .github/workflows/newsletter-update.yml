@@ -2,7 +2,7 @@ name: AI Newsletter Update
 
 on:
   schedule:
-    # Runs at 7 AM UTC every day (adjust as needed)
+    # Runs at 7 AM UTC every day
     - cron: '0 7 * * *'
   workflow_dispatch:
     # Allows manual triggering for testing
@@ -23,14 +23,35 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install google-api-python-client google-auth feedparser requests transformers torch
+        pip install -r requirements.txt
 
-    - name: Run newsletter agent
+    - name: Debug Google API Authentication
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         DOCUMENT_ID: ${{ secrets.DOCUMENT_ID }}
-      run: python newsletter_agent.py
-
-    - name: Log run outcome
+        GITHUB_RUN_ID: ${{ github.run_id }}
       run: |
-        echo "Newsletter update completed at $(date)"
+        echo "Running authentication test..."
+        python debug_auth.py
+      continue-on-error: true
+
+    - name: Run enhanced newsletter agent
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        DOCUMENT_ID: ${{ secrets.DOCUMENT_ID }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+        # Enable verbose logging
+        PYTHONVERBOSE: 1
+      run: |
+        echo "Running newsletter agent..."
+        python enhanced_newsletter_agent.py
+      
+    - name: Record run outcome
+      run: |
+        echo "Newsletter update completed at $(date)" > last_run.log
+        
+    - name: Commit last run log
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Update newsletter run log"
+        file_pattern: last_run.log
