@@ -258,77 +258,165 @@ class AINewsletterAgent:
         ]
         
         self.youtube_video = random.choice(fallback_videos)
-    
-    def generate_prompt_tip(self):
-        """Generate a helpful prompt tip for Claude/ChatGPT users."""
-        # List of useful prompts with catchy intros
-        prompts = [
+        
+    def update_google_doc(self):
+        """Update the Google Doc with proper heading styles."""
+        # First, create the title
+        title = f"AI NEWS CORPUS - {self.today}"
+        
+        requests = [
+            # Clear existing content if needed
             {
-                "intro": "**IDK about you, but we're really impressed with Claude 3.7**",
-                "prompt": "Please fact check each fact in the above output against the original sources to confirm they are accurate. Assume there are mistakes, so don't stop until you've checked every fact and found all mistakes.",
-                "explanation": "Once you prompt it, click the little diagonal arrow next to the thinking dialogue box to expand its thoughts, and you can watch as it meticulously combs through each fact."
+                'deleteContentRange': {
+                    'range': {
+                        'startIndex': 1,
+                        'endIndex': 2  # This is a workaround to clear the document - will be adjusted dynamically
+                    }
+                }
             },
+            # Insert title with Heading 1 style
             {
-                "intro": "**Unleash Claude's Creative Writing Skills**",
-                "prompt": "I need a creative story about [topic]. Before writing, create a character profile with background, motivations, and flaws. Then outline a 3-act structure with conflict and resolution. Now write the story incorporating these elements.",
-                "explanation": "This prompt forces Claude to plan before executing, resulting in richer characters and more coherent plots."
+                'insertText': {
+                    'location': {
+                        'index': 1
+                    },
+                    'text': title + "\n\n"
+                }
             },
+            # Apply Heading 1 formatting to title
             {
-                "intro": "**Make Claude Your Personal Coding Tutor**",
-                "prompt": "Act as a coding mentor teaching me [language/concept]. First explain the core concept in simple terms with an analogy. Then show a basic code example. Finally, give me a simple exercise to try, with its solution hidden below.",
-                "explanation": "Perfect for learning programming concepts step-by-step with the right amount of challenge."
-            },
-            {
-                "intro": "**Get Better Research from ChatGPT**",
-                "prompt": "I'm researching [topic]. First, identify 3 distinct perspectives on this issue. Then for each perspective: 1) Summarize their core arguments, 2) Note their strongest evidence, 3) Identify potential weaknesses, and 4) List key scholars/sources associated with this view.",
-                "explanation": "This structured approach helps ensure more balanced, thorough research summaries."
-            },
-            {
-                "intro": "**Better Data Analysis with Claude**",
-                "prompt": "I have a dataset about [topic]. Walk me through an analysis plan: 1) What cleaning/preprocessing steps should I take? 2) Suggest 3 key insights we might extract, 3) Recommend specific visualization approaches for each insight, 4) Identify potential confounding variables to control for.",
-                "explanation": "Helps you approach data more systematically, even before you start crunching numbers."
-            },
-            {
-                "intro": "**Claude's Decision-Making Framework**",
-                "prompt": "I'm deciding between [option A] and [option B]. Create a decision matrix with 5 key factors to consider. For each factor: 1) Explain why it matters, 2) Rate each option from 1-10, 3) Suggest questions I should ask to refine my understanding.",
-                "explanation": "Turns vague choices into structured decisions with clear evaluation criteria."
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': 1,
+                        'endIndex': len(title) + 1
+                    },
+                    'paragraphStyle': {
+                        'namedStyleType': 'HEADING_1'
+                    },
+                    'fields': 'namedStyleType'
+                }
             }
         ]
         
-        # Pick a random prompt tip
-        selected_prompt = random.choice(prompts)
+        # First get the current document to determine if we need to clear it
+        try:
+            document = self.docs_service.documents().get(documentId=self.doc_id).execute()
+            if 'body' in document and 'content' in document['body']:
+                # Get the document length to clear it properly
+                doc_length = document['body']['content'][-1].get('endIndex', 1)
+                if doc_length > 1:
+                    requests[0]['deleteContentRange']['range']['endIndex'] = doc_length
+        except Exception as e:
+            print(f"Error checking document: {e}")
+            # If we can't check, just proceed with the insertion
+            requests.pop(0)  # Remove the delete request
         
-        # Format the prompt tip nicely
-        formatted_tip = f"{selected_prompt['intro']} and its ability to help you get things done. Try this prompt:\n\n{selected_prompt['prompt']}\n\n{selected_prompt['explanation']}"
+        current_index = len(title) + 3  # Starting index after title and 2 newlines
         
-        return formatted_tip
+        # MAIN STORIES SECTION
+        main_stories_heading = "MAIN STORIES"
+        requests.extend([
+            # Insert Main Stories heading
+            {
+                'insertText': {
+                    'location': {
+                        'index': current_index
+                    },
+                    'text': main_stories_heading + "\n\n"
+                }
+            },
+            # Apply Heading 2 formatting
+            {
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': current_index,
+                        'endIndex': current_index + len(main_stories_heading)
+                    },
+                    'paragraphStyle': {
+                        'namedStyleType': 'HEADING_2'
+                    },
+                    'fields': 'namedStyleType'
+                }
+            }
+        ])
         
-    def fetch_industry_insights(self):
-        """Fetch interesting insights and WTF moments in AI."""
-        # For a free tier, we'll use a predefined list of insights that rotates
-        insights_list = [
-            "Half of OpenAI's security team recently quit over internal disagreements.",
-            "Legal scholars argue training AI on pirated content should be considered 'fair use'.",
-            "AI cheats in video games have evolved to be nearly undetectable by anti-cheat software.",
-            "Intelligence agencies report a decline in critical thinking skills as analysts increasingly rely on AI.",
-            "Research shows AI models consistently make the same logical errors as humans when not given specific reasoning prompts.",
-            "Meta's newest multimodal model can generate videos that fool humans 62% of the time in authenticity tests.",
-            "Hospitals using AI for initial patient screening reported a 23% reduction in misdiagnoses.",
-            "Microsoft researchers found that fine-tuning LLMs on fanfiction produces more creative and diverse outputs.",
-            "The Pentagon is developing an AI that can detect other AIs by analyzing subtle patterns in their outputs.",
-            "AI voice cloning can now be achieved with just 3 seconds of audio, down from 30 seconds last year.",
-            "Researchers discovered that multilingual AI models outperform monolingual ones, even for English-only tasks.",
-            "A new benchmark shows most advanced AI models still struggle with logical reasoning problems that 12-year-olds can solve.",
-            "ChatGPT Plus subscribers dropped 25% after the recent price increase.",
-            "Universities report 42% of professors have caught students submitting AI-generated essays.",
-            "Several major animation studios are now using AI to generate initial storyboards, cutting production time by 50%."
-        ]
+        current_index += len(main_stories_heading) + 2  # +2 for the newlines
         
-        # Select a random subset of insights
-        self.insights = random.sample(insights_list, 4)
+        # Add each main story with Heading 3 style for story titles
+        for i, news in enumerate(self.news_items[:8]):
+            title = news['title'].split(' - ')[0].strip() if ' - ' in news['title'] else news['title']
+            source = news['source'] if 'source' in news else "Unknown Source"
+            story_title = f"{i+1}. {title}"
+            
+            # Content for this story
+            content = f"Source: {source}\nLink: {news['link']}\nSummary: {news['summary']}\n\n"
+            
+            requests.extend([
+                # Insert story title
+                {
+                    'insertText': {
+                        'location': {
+                            'index': current_index
+                        },
+                        'text': story_title + "\n"
+                    }
+                },
+                # Apply Heading 3 formatting to story title
+                {
+                    'updateParagraphStyle': {
+                        'range': {
+                            'startIndex': current_index,
+                            'endIndex': current_index + len(story_title)
+                        },
+                        'paragraphStyle': {
+                            'namedStyleType': 'HEADING_3'
+                        },
+                        'fields': 'namedStyleType'
+                    }
+                },
+                # Insert story content
+                {
+                    'insertText': {
+                        'location': {
+                            'index': current_index + len(story_title) + 1  # +1 for the newline
+                        },
+                        'text': content
+                    }
+                }
+            ])
+            
+            current_index += len(story_title) + 1 + len(content)  # +1 for the newline
         
-    def fetch_startup_news(self):
-        """Fetch news about AI startups and funding."""
+        # STARTUP NEWS SECTION
+        startup_heading = "STARTUP & FUNDING NEWS"
+        requests.extend([
+            # Insert Startup News heading
+            {
+                'insertText': {
+                    'location': {
+                        'index': current_index
+                    },
+                    'text': startup_heading + "\n\n"
+                }
+            },
+            # Apply Heading 2 formatting
+            {
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': current_index,
+                        'endIndex': current_index + len(startup_heading)
+                    },
+                    'paragraphStyle': {
+                        'namedStyleType': 'HEADING_2'
+                    },
+                    'fields': 'namedStyleType'
+                }
+            }
+        ])
+        
+        current_index += len(startup_heading) + 2  # +2 for the newlines
+        
+        # Add startup news
         startup_news_list = [
             {
                 "company": "Runway",
@@ -367,179 +455,368 @@ class AINewsletterAgent:
             }
         ]
         
-        # Select a random subset of startup news
-        self.startup_news = random.sample(startup_news_list, 3)
-    
-    def format_newsletter_content(self):
-        """Format all collected content into the newsletter template styled after The Neuron Daily."""
-        # First, gather all the additional data we need
-        self.fetch_industry_insights()
-        self.fetch_startup_news()
-        
-        # Select random emojis for section headers
-        headline_emoji = random.choice(EMOJIS["headline"])
-        tools_emoji = random.choice(EMOJIS["tools"])
-        news_emoji = random.choice(EMOJIS["news"])
-        video_emoji = random.choice(EMOJIS["video"])
-        insights_emoji = random.choice(EMOJIS["insights"])
-        welcome_emoji = random.choice(EMOJIS["welcome"])
-        prompt_emoji = random.choice(EMOJIS["prompt"])
-        
-        # Generate a catchy headline based on the top news item
-        if self.news_items:
-            main_story = self.news_items[0]
-            # Extract the main part of the title (remove source info)
-            main_title = main_story['title'].split(' - ')[0]
-            headline = f"{headline_emoji} {main_title}"
+        for i, startup in enumerate(startup_news_list):
+            startup_title = f"{i+1}. {startup['company']}"
+            content = f"News: {startup['news']}\nLink: {startup['link']}\n\n"
             
-            # Generate subheading
-            subheading = "PLUS: The AI tools reshaping how we work & create"
-        else:
-            headline = f"{headline_emoji} AI's Wild Week: Breakthroughs, Breakdowns & Innovations"
-            subheading = "PLUS: 3 essential Claude prompts you're not using yet"
-        
-        # Start building the newsletter
-        newsletter = f"""# Return of the Jed(AI) - {self.today}
-
-## {headline}
-
-### {subheading}
-
----
-
-## {welcome_emoji} Welcome, fellow humans!
-
-Hope your algorithms are optimized and your neural nets are firing on all nodes today.
-
-Let's dive into the latest from the AI universe—where the machines are learning faster, 
-but we're still the ones asking the important questions.
-
----
-
-## 📰 Main Story
-"""
-        
-        # Add main article
-        if self.news_items:
-            main_news = self.news_items[0]
-            # Clean up the title
-            main_title = main_news['title'].split(' - ')[0]
-            company = main_news['source'] if 'source' in main_news else "Leading AI Company"
+            requests.extend([
+                # Insert startup title
+                {
+                    'insertText': {
+                        'location': {
+                            'index': current_index
+                        },
+                        'text': startup_title + "\n"
+                    }
+                },
+                # Apply Heading 3 formatting to startup title
+                {
+                    'updateParagraphStyle': {
+                        'range': {
+                            'startIndex': current_index,
+                            'endIndex': current_index + len(startup_title)
+                        },
+                        'paragraphStyle': {
+                            'namedStyleType': 'HEADING_3'
+                        },
+                        'fields': 'namedStyleType'
+                    }
+                },
+                # Insert startup content
+                {
+                    'insertText': {
+                        'location': {
+                            'index': current_index + len(startup_title) + 1  # +1 for the newline
+                        },
+                        'text': content
+                    }
+                }
+            ])
             
-            newsletter += f"""
-### 🚀 {main_title}
-
-{main_news['summary']}
-
-**Why it matters**: This development could reshape how AI is developed and deployed in everyday applications.
-
-[Read the full story →]({main_news['link']})
-
----
-"""
+            current_index += len(startup_title) + 1 + len(content)  # +1 for the newline
         
-        # Add prompt tip of the day with a catchy section title
-        prompt_tip = self.generate_prompt_tip()
-        newsletter += f"""
-## {prompt_emoji} Prompt Magic of the Day
-
-{prompt_tip}
-
----
-"""
-        
-        # Add AI tools list with a catchy section title
-        newsletter += f"""
-## {tools_emoji} AI Toolkit: New & Noteworthy
-
-"""
-        # Include 3-5 tools with better formatting
-        for i, tool in enumerate(self.ai_tools[:5]):
-            newsletter += f"- **{tool['name']}** → {tool['description']}\n"
-        
-        newsletter += """
-[Explore all tools →](https://www.example.com/tools)
-
----
-"""
-        
-        # Add quick hits section
-        newsletter += f"""
-## {news_emoji} Around the Horn (Quick Hits)
-
-"""
-        # Use the next 4-5 news items for quick hits
-        for i, news in enumerate(self.news_items[1:6]):
-            # Extract company and headline more carefully
-            if ':' in news['title']:
-                parts = news['title'].split(':', 1)
-                company = parts[0].strip()
-                headline = parts[1].strip()
-            else:
-                parts = news['title'].split(' - ', 1)
-                headline = parts[0].strip()
-                company = news['source'] if 'source' in news else "AI News"
-            
-            newsletter += f"- **{company}**: {headline}\n"
-        
-        # Add startup news section
-        newsletter += f"""
----
-
-## 🚀 Startup Spotlight
-
-"""
-        for startup in self.startup_news:
-            newsletter += f"- **{startup['company']}** {startup['news']}\n"
-        
-        # Add YouTube video recommendation
-        if self.youtube_video:
-            newsletter += f"""
----
-
-## {video_emoji} This Week in AI (Video Pick)
-
-**{self.youtube_video['title']}** from {self.youtube_video['channel']}
-
-[Watch Now →]({self.youtube_video['link']})
-
----
-"""
-        
-        # Add intelligent insights section
-        newsletter += f"""
-## {insights_emoji} Intelligent Insights
-
-"""
-        for insight in self.insights:
-            newsletter += f"- {insight}\n"
-        
-        # Add final CTA
-        newsletter += """
----
-
-## 📣 That's a wrap!
-
-Thanks for reading! The best way to support us is by sharing this newsletter with a friend.
-
-👉 [Subscribe] | [Visit our site] | [Explore AI tools]
-
-"""
-        return newsletter
-    
-    def update_google_doc(self, content):
-        """Update the Google Doc with the formatted newsletter content."""
-        requests = [
+        # AI TOOLS SECTION
+        tools_heading = "NEW AI TOOLS"
+        requests.extend([
+            # Insert AI Tools heading
             {
                 'insertText': {
                     'location': {
-                        'index': 1  # Insert at the beginning of the document
+                        'index': current_index
                     },
-                    'text': content
+                    'text': tools_heading + "\n\n"
                 }
+            },
+            # Apply Heading 2 formatting
+            {
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': current_index,
+                        'endIndex': current_index + len(tools_heading)
+                    },
+                    'paragraphStyle': {
+                        'namedStyleType': 'HEADING_2'
+                    },
+                    'fields': 'namedStyleType'
+                }
+            }
+        ])
+        
+        current_index += len(tools_heading) + 2  # +2 for the newlines
+        
+        # Add AI tools
+        for i, tool in enumerate(self.ai_tools[:8]):
+            tool_title = f"{i+1}. {tool['name']}"
+            content = f"Description: {tool['description']}\nLink: {tool['link']}\n\n"
+            
+            requests.extend([
+                # Insert tool title
+                {
+                    'insertText': {
+                        'location': {
+                            'index': current_index
+                        },
+                        'text': tool_title + "\n"
+                    }
+                },
+                # Apply Heading 3 formatting to tool title
+                {
+                    'updateParagraphStyle': {
+                        'range': {
+                            'startIndex': current_index,
+                            'endIndex': current_index + len(tool_title)
+                        },
+                        'paragraphStyle': {
+                            'namedStyleType': 'HEADING_3'
+                        },
+                        'fields': 'namedStyleType'
+                    }
+                },
+                # Insert tool content
+                {
+                    'insertText': {
+                        'location': {
+                            'index': current_index + len(tool_title) + 1  # +1 for the newline
+                        },
+                        'text': content
+                    }
+                }
+            ])
+            
+            current_index += len(tool_title) + 1 + len(content)  # +1 for the newline
+        
+        # INSIGHTS SECTION
+        insights_heading = "INTERESTING INSIGHTS"
+        requests.extend([
+            # Insert Insights heading
+            {
+                'insertText': {
+                    'location': {
+                        'index': current_index
+                    },
+                    'text': insights_heading + "\n\n"
+                }
+            },
+            # Apply Heading 2 formatting
+            {
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': current_index,
+                        'endIndex': current_index + len(insights_heading)
+                    },
+                    'paragraphStyle': {
+                        'namedStyleType': 'HEADING_2'
+                    },
+                    'fields': 'namedStyleType'
+                }
+            }
+        ])
+        
+        current_index += len(insights_heading) + 2  # +2 for the newlines
+        
+        # Add insights
+        insights_list = [
+            "Half of OpenAI's security team recently quit over internal disagreements.",
+            "Legal scholars argue training AI on pirated content should be considered 'fair use'.",
+            "AI cheats in video games have evolved to be nearly undetectable by anti-cheat software.",
+            "Intelligence agencies report a decline in critical thinking skills as analysts increasingly rely on AI.",
+            "Research shows AI models consistently make the same logical errors as humans when not given specific reasoning prompts.",
+            "Meta's newest multimodal model can generate videos that fool humans 62% of the time in authenticity tests.",
+            "Hospitals using AI for initial patient screening reported a 23% reduction in misdiagnoses.",
+            "Microsoft researchers found that fine-tuning LLMs on fanfiction produces more creative and diverse outputs.",
+            "The Pentagon is developing an AI that can detect other AIs by analyzing subtle patterns in their outputs.",
+            "AI voice cloning can now be achieved with just 3 seconds of audio, down from 30 seconds last year.",
+            "Researchers discovered that multilingual AI models outperform monolingual ones, even for English-only tasks.",
+            "A new benchmark shows most advanced AI models still struggle with logical reasoning problems that 12-year-olds can solve.",
+            "ChatGPT Plus subscribers dropped 25% after the recent price increase.",
+            "Universities report 42% of professors have caught students submitting AI-generated essays.",
+            "Several major animation studios are now using AI to generate initial storyboards, cutting production time by 50%."
+        ]
+        
+        # Format insights as a simple list
+        insights_content = ""
+        for i, insight in enumerate(insights_list):
+            insights_content += f"{i+1}. {insight}\n"
+        insights_content += "\n"
+        
+        requests.append({
+            'insertText': {
+                'location': {
+                    'index': current_index
+                },
+                'text': insights_content
+            }
+        })
+        
+        current_index += len(insights_content)
+        
+        # PROMPT TIPS SECTION
+        prompt_heading = "PROMPT TIPS"
+        requests.extend([
+            # Insert Prompt Tips heading
+            {
+                'insertText': {
+                    'location': {
+                        'index': current_index
+                    },
+                    'text': prompt_heading + "\n\n"
+                }
+            },
+            # Apply Heading 2 formatting
+            {
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': current_index,
+                        'endIndex': current_index + len(prompt_heading)
+                    },
+                    'paragraphStyle': {
+                        'namedStyleType': 'HEADING_2'
+                    },
+                    'fields': 'namedStyleType'
+                }
+            }
+        ])
+        
+        current_index += len(prompt_heading) + 2  # +2 for the newlines
+        
+        # Add prompt tips
+        prompt_tips = [
+            {
+                "title": "Fact-Checking with Claude 3.7",
+                "prompt": "Please fact check each fact in the above output against the original sources to confirm they are accurate. Assume there are mistakes, so don't stop until you've checked every fact and found all mistakes.",
+                "explanation": "This forces Claude to meticulously examine each claim and verify its accuracy against sources."
+            },
+            {
+                "title": "Better Creative Writing",
+                "prompt": "I need a creative story about [topic]. Before writing, create a character profile with background, motivations, and flaws. Then outline a 3-act structure with conflict and resolution. Now write the story incorporating these elements.",
+                "explanation": "This prompt forces LLMs to plan before executing, resulting in richer characters and more coherent plots."
+            },
+            {
+                "title": "Coding Tutorial Generator",
+                "prompt": "Act as a coding mentor teaching me [language/concept]. First explain the core concept in simple terms with an analogy. Then show a basic code example. Finally, give me a simple exercise to try, with its solution hidden below.",
+                "explanation": "Perfect for learning programming concepts step-by-step with the right amount of challenge."
+            },
+            {
+                "title": "Balanced Research Framework",
+                "prompt": "I'm researching [topic]. First, identify 3 distinct perspectives on this issue. Then for each perspective: 1) Summarize their core arguments, 2) Note their strongest evidence, 3) Identify potential weaknesses, and 4) List key scholars/sources associated with this view.",
+                "explanation": "This structured approach helps ensure more balanced, thorough research summaries."
+            },
+            {
+                "title": "Data Analysis Planning",
+                "prompt": "I have a dataset about [topic]. Walk me through an analysis plan: 1) What cleaning/preprocessing steps should I take? 2) Suggest 3 key insights we might extract, 3) Recommend specific visualization approaches for each insight, 4) Identify potential confounding variables to control for.",
+                "explanation": "Helps you approach data more systematically, even before you start crunching numbers."
             }
         ]
         
+        for i, tip in enumerate(prompt_tips):
+            tip_title = f"{i+1}. {tip['title']}"
+            content = f"Prompt: {tip['prompt']}\nWhy it works: {tip['explanation']}\n\n"
+            
+            requests.extend([
+                # Insert tip title
+                {
+                    'insertText': {
+                        'location': {
+                            'index': current_index
+                        },
+                        'text': tip_title + "\n"
+                    }
+                },
+                # Apply Heading 3 formatting to tip title
+                {
+                    'updateParagraphStyle': {
+                        'range': {
+                            'startIndex': current_index,
+                            'endIndex': current_index + len(tip_title)
+                            },
+                        'paragraphStyle': {
+                            'namedStyleType': 'HEADING_3'
+                        },
+                        'fields': 'namedStyleType'
+                    }
+                },
+                # Insert tip content
+                {
+                    'insertText': {
+                        'location': {
+                            'index': current_index + len(tip_title) + 1  # +1 for the newline
+                        },
+                        'text': content
+                    }
+                }
+            ])
+            
+            current_index += len(tip_title) + 1 + len(content)  # +1 for the newline
+        
+        # VIDEOS SECTION
+        videos_heading = "RECOMMENDED VIDEOS"
+        requests.extend([
+            # Insert Videos heading
+            {
+                'insertText': {
+                    'location': {
+                        'index': current_index
+                    },
+                    'text': videos_heading + "\n\n"
+                }
+            },
+            # Apply Heading 2 formatting
+            {
+                'updateParagraphStyle': {
+                    'range': {
+                        'startIndex': current_index,
+                        'endIndex': current_index + len(videos_heading)
+                    },
+                    'paragraphStyle': {
+                        'namedStyleType': 'HEADING_2'
+                    },
+                    'fields': 'namedStyleType'
+                }
+            }
+        ])
+        
+        current_index += len(videos_heading) + 2  # +2 for the newlines
+        
+        # Add videos
+        video_list = [
+            {
+                "title": self.youtube_video['title'] if self.youtube_video else "The Future of AI: 2025 Predictions",
+                "channel": self.youtube_video['channel'] if self.youtube_video else "Two Minute Papers",
+                "link": self.youtube_video['link'] if self.youtube_video else "https://www.youtube.com/watch?v=example"
+            },
+            {
+                "title": "How LLMs Actually Work",
+                "channel": "AI Explained",
+                "link": "https://www.youtube.com/watch?v=example2"
+            },
+            {
+                "title": "The Truth About AI Productivity",
+                "channel": "Lex Fridman",
+                "link": "https://www.youtube.com/watch?v=example3"
+            }
+        ]
+        
+        for i, video in enumerate(video_list):
+            video_title = f"{i+1}. {video['title']}"
+            content = f"Channel: {video['channel']}\nLink: {video['link']}\n\n"
+            
+            requests.extend([
+                # Insert video title
+                {
+                    'insertText': {
+                        'location': {
+                            'index': current_index
+                        },
+                        'text': video_title + "\n"
+                    }
+                },
+                # Apply Heading 3 formatting to video title
+                {
+                    'updateParagraphStyle': {
+                        'range': {
+                            'startIndex': current_index,
+                            'endIndex': current_index + len(video_title)
+                        },
+                        'paragraphStyle': {
+                            'namedStyleType': 'HEADING_3'
+                        },
+                        'fields': 'namedStyleType'
+                    }
+                },
+                # Insert video content
+                {
+                    'insertText': {
+                        'location': {
+                            'index': current_index + len(video_title) + 1  # +1 for the newline
+                        },
+                        'text': content
+                    }
+                }
+            ])
+            
+            current_index += len(video_title) + 1 + len(content)  # +1 for the newline
+        
+        # Execute the batch update
         try:
             result = self.docs_service.documents().batchUpdate(
                 documentId=self.doc_id,
@@ -561,23 +838,19 @@ Thanks for reading! The best way to support us is by sharing this newsletter wit
         self.fetch_ai_tools()
         self.fetch_youtube_video()
         
-        # Format into newsletter
-        newsletter_content = self.format_newsletter_content()
-        
-        # Update Google Doc
-        success = self.update_google_doc(newsletter_content)
+        # Update Google Doc with proper heading styles
+        success = self.update_google_doc()
         
         if success:
-            print("Newsletter updated successfully!")
+            print("Newsletter corpus updated successfully!")
             return {
                 "status": "success",
                 "timestamp": datetime.datetime.now().isoformat(),
                 "articles_found": len(self.news_items),
-                "tools_found": len(self.ai_tools),
-                "newsletter_length": len(newsletter_content)
+                "tools_found": len(self.ai_tools)
             }
         else:
-            print("Failed to update newsletter.")
+            print("Failed to update newsletter corpus.")
             return {
                 "status": "error",
                 "timestamp": datetime.datetime.now().isoformat()
