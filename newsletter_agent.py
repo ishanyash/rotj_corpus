@@ -12,13 +12,23 @@ from google.oauth2.service_account import Credentials
 from google.oauth2 import service_account
 import re
 import html
-from bs4 import BeautifulSoup
 from transformers import pipeline
 
 # Set up basic logging
 def log(message, level="INFO"):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{level}] {timestamp} - {message}")
+
+# List of emojis for section headers and titles
+EMOJIS = {
+    "headline": ["🤖", "🚀", "🔥", "✨", "💡", "🌟", "🎮", "💻", "🧠", "🔮", "👁️", "🌐", "📱", "🤯"],
+    "tools": ["🧰", "🔧", "🛠️", "⚙️", "🔨", "🔍", "🔎", "🎯", "🎨", "✏️", "🔌", "💾", "📂", "📋"],
+    "news": ["🌀", "📰", "🗞️", "📢", "📣", "📡", "📻", "📺", "📝", "📌", "📍", "🔔", "🔊", "🗣️"],
+    "video": ["🎧", "🎬", "📹", "🎥", "📽️", "🎞️", "📺", "🎙️", "🎤", "📀", "💿", "📡", "📺", "🎦"],
+    "insights": ["🧠", "💭", "🔍", "💡", "⚡", "🔎", "🧐", "🤔", "👀", "📊", "📈", "📉", "📗", "👁️"],
+    "welcome": ["👋", "✌️", "🙌", "👏", "👐", "🤝", "🖐️", "🤟", "👍", "🎯", "🎆", "🌈", "🌞", "🌠"],
+    "prompt": ["💬", "🗯️", "💭", "💡", "✏️", "📝", "⌨️", "🖋️", "📋", "🤔", "👨‍💻", "📊", "🧮", "🧩"]
+}
 
 class AINewsletterAgent:
     def __init__(self):
@@ -100,7 +110,7 @@ class AINewsletterAgent:
                 pass
                 
     def fetch_ai_news(self):
-        """Fetch AI news from Google News RSS feed with improved error handling and content extraction."""
+        """Fetch AI news from Google News RSS feed with improved error handling."""
         log("Fetching AI news...")
         
         # Define AI and tech related RSS feeds
@@ -143,46 +153,19 @@ class AINewsletterAgent:
                             else:
                                 summary = "No summary available."
                             
-                            # Try to get the full article text if possible
-                            full_text = ""
-                            try:
-                                if hasattr(entry, 'link'):
-                                    # Try to fetch the article content
-                                    response = requests.get(entry.link, timeout=5)
-                                    if response.status_code == 200:
-                                        # Parse with BeautifulSoup
-                                        soup = BeautifulSoup(response.text, 'html.parser')
-                                        
-                                        # Try to extract the main content using common article tags
-                                        article_content = soup.find('article')
-                                        if article_content:
-                                            paragraphs = article_content.find_all('p')
-                                            full_text = "\n".join([p.get_text() for p in paragraphs])
-                                        
-                                        # If we couldn't find an article tag, try other common content containers
-                                        if not full_text:
-                                            for content_div in soup.find_all(['div', 'section'], class_=re.compile('content|article|post|entry')):
-                                                paragraphs = content_div.find_all('p')
-                                                if len(paragraphs) > 3:  # Only use if it has a decent number of paragraphs
-                                                    full_text = "\n".join([p.get_text() for p in paragraphs])
-                                                    break
-                            except Exception as e:
-                                log(f"Warning: Could not fetch full article content: {str(e)}", "WARNING")
-                            
                             # Use the transformer model to create a better summary if the article has content
                             enhanced_summary = summary
-                            if len(summary) > 100 or len(full_text) > 100:
+                            if len(summary) > 100:
                                 try:
                                     # Load the summarizer if needed
                                     self.load_summarizer()
                                     
                                     if self.summarizer:
-                                        # Use full text if available, otherwise use summary
-                                        text_to_summarize = full_text if full_text else summary
-                                        
                                         # Limit input length to avoid out-of-memory issues
-                                        if len(text_to_summarize) > 1024:
-                                            text_to_summarize = text_to_summarize[:1024]
+                                        if len(summary) > 1024:
+                                            text_to_summarize = summary[:1024]
+                                        else:
+                                            text_to_summarize = summary
                                             
                                         # Generate better summary
                                         ai_summary = self.summarizer(text_to_summarize, 
@@ -194,10 +177,7 @@ class AINewsletterAgent:
                                 except Exception as e:
                                     log(f"Warning: Error summarizing: {str(e)}", "WARNING")
                                     # Fall back to original summary or trimmed text
-                                    if full_text:
-                                        enhanced_summary = full_text[:500] + "..."
-                                    else:
-                                        enhanced_summary = summary[:500] + "..."
+                                    enhanced_summary = summary[:500] + "..."
                             
                             # Extract the source from the title if available (usually in format "Title - Source")
                             source = "AI News"
@@ -213,7 +193,6 @@ class AINewsletterAgent:
                                 'link': entry.link if hasattr(entry, 'link') else "",
                                 'published': entry.published if hasattr(entry, 'published') else datetime.datetime.now().isoformat(),
                                 'summary': enhanced_summary,
-                                'full_text': full_text,
                                 'source': source
                             })
                             
@@ -244,7 +223,6 @@ class AINewsletterAgent:
                 'link': "https://openai.com/blog/chatgpt-plus-free-for-students",
                 'published': datetime.datetime.now().isoformat(),
                 'summary': "OpenAI announced that ChatGPT Plus will be free for all US and Canadian college students through May. This initiative aims to help students with research, learning, and productivity.",
-                'full_text': "OpenAI today announced a new educational initiative making ChatGPT Plus free for verified college students in the United States and Canada. The program, which runs through the end of the academic year in May, provides students with full access to ChatGPT Plus features including GPT-4o capabilities, DALL-E image generation, and Advanced Data Analysis.\n\nAccording to OpenAI's announcement, students can verify their status using their .edu email address through a partnership with SheerID. OpenAI CEO Sam Altman stated, 'We believe AI will be an incredible tool for learning and research. Making ChatGPT Plus freely available to students is part of our commitment to ensuring AI benefits education.'\n\nThe company also released a set of guidelines specifically for academic use, addressing concerns about AI-generated content in coursework. The guidelines emphasize transparency with professors about AI use and recommend using ChatGPT as a learning assistant rather than a substitute for original work.\n\nEducation experts have noted this move could significantly impact how AI is integrated into higher education. Several universities have already begun developing formal policies around AI use in coursework, with many focusing on teaching students to use these tools effectively rather than prohibiting them outright.",
                 'source': "OpenAI Blog"
             },
             {
@@ -252,7 +230,6 @@ class AINewsletterAgent:
                 'link': "https://www.anthropic.com/news",
                 'published': datetime.datetime.now().isoformat(),
                 'summary': "Anthropic announced a partnership with Google to integrate Claude AI into Google Workspace. This will allow users to access Claude's capabilities directly within Gmail, Docs, and other Google services.",
-                'full_text': "Anthropic and Google today announced a strategic partnership that will bring Claude AI's capabilities to Google Workspace applications. The integration, expected to roll out beginning next month, will allow Google Workspace users to access Claude directly within Gmail, Google Docs, Sheets, Slides, and Meet.\n\nThe partnership represents a significant expansion of Anthropic's enterprise strategy and provides Google with a competitive response to Microsoft's extensive Copilot integrations with Office 365. According to Anthropic's press release, Claude will be able to help draft emails in Gmail, generate and edit text in Docs, analyze data in Sheets, create presentations in Slides, and provide real-time meeting summaries in Meet.\n\n'We're thrilled to bring Claude's capabilities to the productivity tools used by millions of people every day,' said Anthropic CEO Dario Amodei. 'This partnership allows us to meet users where they already work.'\n\nGoogle Workspace VP Johanna Voolich Wright added, 'Adding Claude's capabilities to Workspace creates a powerful combination that will help people work more efficiently and creatively.'\n\nThe companies indicated that Claude's integration will initially be available to Google Workspace business and enterprise customers through an add-on, with plans to expand availability over time. Pricing details have not yet been announced.",
                 'source': "Anthropic"
             },
             {
@@ -260,7 +237,6 @@ class AINewsletterAgent:
                 'link': "https://deepmind.com/blog",
                 'published': datetime.datetime.now().isoformat(),
                 'summary': "DeepMind developed an AI system called Dreamer that figured out how to collect diamonds in Minecraft without being taught how to play, using reinforcement learning and a 'world model' to imagine future scenarios.",
-                'full_text': "DeepMind researchers have developed an AI agent capable of learning to play Minecraft from scratch without any human demonstrations or guidance. The system, based on their Dreamer reinforcement learning algorithm, successfully learned to gather diamonds - one of the game's most challenging achievements requiring a complex sequence of actions.\n\nThe key innovation in DeepMind's approach is the use of what they call a 'world model' that allows the AI to predict the outcomes of its actions before taking them. This enables the agent to learn through imagination, considering potential futures without having to experience them directly in the game.\n\n'Dreamer learns a model of the world and uses it to imagine thousands of possible futures to learn from,' explained lead researcher Danijar Hafner. 'This allows much more efficient learning than traditional trial-and-error approaches.'\n\nStarting with no knowledge of Minecraft mechanics, the AI first learned basic movement and gradually progressed to crafting tools, mining resources, and eventually obtaining diamonds. The entire learning process took approximately 20 days of training using a single NVIDIA A100 GPU.\n\nThe achievement is particularly noteworthy because previous AI systems that accomplished diamond collection in Minecraft relied heavily on human demonstrations or specially designed rewards. Dreamer had no specific instructions about diamonds - it simply explored the game environment guided by its curiosity.\n\nResearchers say the techniques developed for Dreamer could potentially be applied to robotics and other real-world learning scenarios where trial-and-error experimentation is impractical or expensive.",
                 'source': "DeepMind"
             },
             {
@@ -268,7 +244,6 @@ class AINewsletterAgent:
                 'link': "https://techcrunch.com/spotify-gen-ai-ads",
                 'published': datetime.datetime.now().isoformat(),
                 'summary': "Spotify introduced new Gen AI Ads for creating scripts and voiceovers at no extra cost to advertisers. The tool aims to streamline the ad creation process for podcasts and audio content.",
-                'full_text': "Spotify announced today the launch of its new AI-powered audio advertising tools, which will allow advertisers to generate ad scripts and realistic voiceovers with minimal effort. The feature, now in beta for Spotify Advertising customers, is designed to lower the barrier to entry for audio advertising, particularly for small and medium-sized businesses.\n\nThe new tool, called Spotify Gen AI Ads, enables advertisers to describe their product or service in a brief text prompt. The system then generates multiple script options tailored to the Spotify audio environment. Once a script is selected, advertisers can choose from a library of AI-generated voices to create a finished audio ad without requiring a studio, voice talent, or audio engineering expertise.\n\n'We're removing the complexity and cost traditionally associated with audio ad creation,' said Spotify's VP of Product for Advertising, Khurrum Malik. 'This opens up audio advertising to businesses of all sizes who previously may have found it too expensive or technically challenging.'\n\nThe company emphasized that human review remains part of the process, with advertisers able to edit scripts and provide feedback to refine the outputs. Spotify also stated that the AI voices are not based on or designed to mimic any real voice actors.\n\nInitial testing with select advertisers has shown promising results, with Spotify reporting that ads created using the new AI tools demonstrated engagement rates comparable to traditionally produced audio ads while significantly reducing production time and costs.\n\nThe feature will roll out gradually to Spotify Ad Studio customers in the US starting this month, with plans for wider availability later this year.",
                 'source': "TechCrunch"
             }
         ]
@@ -399,16 +374,11 @@ class AINewsletterAgent:
                 # More robust extraction with improved regex
                 video_id_match = re.search(r'watch\?v=([a-zA-Z0-9_-]{11})', response.text)
                 
-                # Try to extract title using BeautifulSoup for better accuracy
+                # Try to extract title using regex for better compatibility
                 title = "Latest AI Video"
-                try:
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    # Look for video titles in YouTube's HTML structure
-                    title_elements = soup.find_all('a', {'id': 'video-title'})
-                    if title_elements and len(title_elements) > 0:
-                        title = title_elements[0].get('title', 'Latest AI Video')
-                except Exception as e:
-                    log(f"Warning: Could not parse video title: {str(e)}", "WARNING")
+                title_match = re.search(r'title="([^"]+)"', response.text)
+                if title_match:
+                    title = title_match.group(1)
                 
                 if video_id_match:
                     video_id = video_id_match.group(1)
@@ -507,9 +477,7 @@ Let's jump to hyperspace!
             formatted_content += f"**{story_title}**\n\n"
             
             # Add full text if available, otherwise use summary
-            story_content = main_story.get('full_text', '')
-            if not story_content:
-                story_content = main_story.get('summary', 'No details available.')
+            story_content = main_story.get('summary', 'No details available.')
                 
             formatted_content += f"{story_content}\n\n"
             formatted_content += f"Source: {main_story.get('source', 'Unknown')}\n"
@@ -792,17 +760,6 @@ The best way to support this newsletter? Share it with a fellow tech enthusiast!
                 "message": str(e),
                 "timestamp": datetime.datetime.now().isoformat()
             }
-
-# Constants for formatting
-EMOJIS = {
-    "headline": ["🤖", "🚀", "🔥", "✨", "💡", "🌟", "🎮", "💻", "🧠", "🔮", "👁️", "🌐", "📱", "🤯"],
-    "tools": ["🧰", "🔧", "🛠️", "⚙️", "🔨", "🔍", "🔎", "🎯", "🎨", "✏️", "🔌", "💾", "📂", "📋"],
-    "news": ["🌀", "📰", "🗞️", "📢", "📣", "📡", "📻", "📺", "📝", "📌", "📍", "🔔", "🔊", "🗣️"],
-    "video": ["🎧", "🎬", "📹", "🎥", "📽️", "🎞️", "📺", "🎙️", "🎤", "📀", "💿", "📡", "📺", "🎦"],
-    "insights": ["🧠", "💭", "🔍", "💡", "⚡", "🔎", "🧐", "🤔", "👀", "📊", "📈", "📉", "📗", "👁️"],
-    "welcome": ["👋", "✌️", "🙌", "👏", "👐", "🤝", "🖐️", "🤟", "👍", "🎯", "🎆", "🌈", "🌞", "🌠"],
-    "prompt": ["💬", "🗯️", "💭", "💡", "✏️", "📝", "⌨️", "🖋️", "📋", "🤔", "👨‍💻", "📊", "🧮", "🧩"]
-}
 
 # Main execution
 if __name__ == "__main__":

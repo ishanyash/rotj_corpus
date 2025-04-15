@@ -4,13 +4,6 @@ Google Docs API Authentication Debugger
 
 This script helps diagnose issues with Google Docs API authentication
 by testing your service account credentials and document access.
-
-Usage:
-  python debug_auth.py
-
-Environment variables:
-  GOOGLE_CREDENTIALS - The service account JSON credentials (required)
-  DOCUMENT_ID - The Google Doc ID to test access (required)
 """
 
 import os
