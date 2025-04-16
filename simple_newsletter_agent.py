@@ -4,19 +4,17 @@ import requests
 import feedparser
 import datetime
 import random
-import traceback
-import sys
-from googleapiclient.discovery import build
-from google.oauth2 import service_account
 import re
 import html
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
 # Set up basic logging
 def log(message, level="INFO"):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{level}] {timestamp} - {message}")
 
-# List of emojis for section headers and titles
+# Emojis for section headers
 EMOJIS = {
     "headline": ["🤖", "🚀", "🔥", "✨", "💡", "🌟", "🎮", "💻", "🧠", "🔮", "👁️", "🌐", "📱", "🤯"],
     "tools": ["🧰", "🔧", "🛠️", "⚙️", "🔨", "🔍", "🔎", "🎯", "🎨", "✏️", "🔌", "💾", "📂", "📋"],
@@ -27,71 +25,39 @@ EMOJIS = {
     "prompt": ["💬", "🗯️", "💭", "💡", "✏️", "📝", "⌨️", "🖋️", "📋", "🤔", "👨‍💻", "📊", "🧮", "🧩"]
 }
 
-class SimpleNewsletterAgent:
+class NewsletterAgent:
     def __init__(self):
-        log("Initializing Simple Newsletter Agent")
+        log("Initializing Newsletter Agent")
+        # Get credentials from environment variables
+        creds_json = os.environ.get('GOOGLE_CREDENTIALS')
         self.doc_id = os.environ.get('DOCUMENT_ID')
-        if not self.doc_id:
-            log("ERROR: DOCUMENT_ID environment variable is not set", "ERROR")
-            sys.exit(1)
-            
-        log(f"Using document ID: {self.doc_id}")
         
-        # Initialize variables
+        if not creds_json or not self.doc_id:
+            log("Missing environment variables. Make sure GOOGLE_CREDENTIALS and DOCUMENT_ID are set.", "ERROR")
+            raise ValueError("Missing required environment variables")
+            
+        # Initialize API client
+        try:
+            creds_dict = json.loads(creds_json)
+            creds = service_account.Credentials.from_service_account_info(
+                creds_dict, 
+                scopes=['https://www.googleapis.com/auth/documents']
+            )
+            self.docs_service = build('docs', 'v1', credentials=creds)
+            log("Google Docs API client initialized")
+        except Exception as e:
+            log(f"Failed to initialize Google Docs API client: {str(e)}", "ERROR")
+            raise
+            
+        # Initialize data containers
         self.news_items = []
         self.ai_tools = []
         self.youtube_video = None
-        self.insights = []
         self.today = datetime.datetime.now().strftime("%A, %B %d, %Y")
         
-        # Connect to Google Docs
-        self.setup_google_docs()
-        
-    def setup_google_docs(self):
-        """Set up Google Docs API client with better error handling."""
-        log("Setting up Google Docs API client")
-        
-        creds_json = os.environ.get('GOOGLE_CREDENTIALS')
-        if not creds_json:
-            log("ERROR: GOOGLE_CREDENTIALS environment variable is not set", "ERROR")
-            sys.exit(1)
-        
-        try:
-            creds_dict = json.loads(creds_json)
-            log(f"Using service account: {creds_dict.get('client_email', 'unknown')}")
-            
-            creds = service_account.Credentials.from_service_account_info(
-                creds_dict,
-                scopes=['https://www.googleapis.com/auth/documents']
-            )
-            
-            self.docs_service = build('docs', 'v1', credentials=creds)
-            log("Google Docs API client initialized successfully")
-            
-            # Test the connection by getting document info
-            try:
-                document = self.docs_service.documents().get(documentId=self.doc_id).execute()
-                log(f"Successfully connected to document: '{document.get('title', 'Untitled')}'")
-            except Exception as e:
-                log(f"ERROR: Failed to access document: {str(e)}", "ERROR")
-                if "404" in str(e):
-                    log("The document ID may be incorrect or the service account doesn't have access", "ERROR")
-                sys.exit(1)
-                
-        except json.JSONDecodeError:
-            log("ERROR: GOOGLE_CREDENTIALS is not valid JSON", "ERROR")
-            # Print a limited view of the credentials for debugging
-            if creds_json:
-                log(f"Credentials start with: {creds_json[:20]}...", "ERROR")
-            sys.exit(1)
-        except Exception as e:
-            log(f"ERROR: Failed to set up Google Docs API: {str(e)}", "ERROR")
-            traceback.print_exc()
-            sys.exit(1)
-                
     def fetch_ai_news(self):
-        """Fetch AI news from Google News RSS feed with improved error handling."""
-        log("Fetching AI news...")
+        """Fetch AI news from Google News RSS feed."""
+        log("Fetching AI news")
         
         # Define AI and tech related RSS feeds
         feeds = [
@@ -104,77 +70,63 @@ class SimpleNewsletterAgent:
         
         for feed_url in feeds:
             try:
-                log(f"Parsing feed: {feed_url}")
                 feed = feedparser.parse(feed_url)
                 
-                if not feed.entries:
-                    log(f"No entries found in feed: {feed_url}")
-                    continue
+                for entry in feed.entries[:3]:  # Get top 3 entries from each feed
+                    # Basic cleaning
+                    title = html.unescape(entry.title) if hasattr(entry, 'title') else "Untitled"
                     
-                log(f"Found {len(feed.entries)} entries in feed")
-                
-                for entry in feed.entries[:5]:  # Get the top 5 entries from each feed
-                    try:
-                        # Basic cleaning
-                        title = html.unescape(entry.title) if hasattr(entry, 'title') else "Untitled"
+                    # Check if this is relevant to AI
+                    ai_related_terms = ['artificial intelligence', 'ai', 'machine learning', 'openai', 
+                                       'anthropic', 'claude', 'gpt', 'llm', 'deep learning']
+                    
+                    is_relevant = any(term in title.lower() for term in ai_related_terms)
+                    
+                    if is_relevant:
+                        # Get the summary and clean it up
+                        if hasattr(entry, 'summary'):
+                            summary = html.unescape(entry.summary)
+                            # Remove HTML tags
+                            summary = re.sub(r'<.*?>', '', summary)
+                        else:
+                            summary = "No summary available."
                         
-                        # Check if this is relevant to AI
-                        ai_related_terms = ['artificial intelligence', 'ai', 'machine learning', 'openai', 
-                                           'anthropic', 'claude', 'gpt', 'llm', 'deep learning', 'neural network']
+                        # Trim summary if too long
+                        if len(summary) > 300:
+                            summary = summary[:297] + "..."
                         
-                        is_relevant = any(term in title.lower() for term in ai_related_terms)
+                        # Extract the source from the title if available
+                        source = "AI News"
+                        if ' - ' in title:
+                            title_parts = title.split(' - ')
+                            if len(title_parts) > 1:
+                                source = title_parts[-1]
+                                title = ' - '.join(title_parts[:-1])
                         
-                        if is_relevant:
-                            # Get the summary and clean it up
-                            if hasattr(entry, 'summary'):
-                                summary = html.unescape(entry.summary)
-                                # Remove HTML tags
-                                summary = re.sub(r'<.*?>', '', summary)
-                            else:
-                                summary = "No summary available."
-                            
-                            # Simple summary trimming - no AI summarization to avoid memory issues
-                            if len(summary) > 500:
-                                summary = summary[:500] + "..."
-                            
-                            # Extract the source from the title if available (usually in format "Title - Source")
-                            source = "AI News"
-                            if ' - ' in title:
-                                title_parts = title.split(' - ')
-                                if len(title_parts) > 1:
-                                    source = title_parts[-1]
-                                    title = ' - '.join(title_parts[:-1])  # Remove source from title
-                            
-                            # Add to our news items
-                            self.news_items.append({
-                                'title': title,
-                                'link': entry.link if hasattr(entry, 'link') else "",
-                                'published': entry.published if hasattr(entry, 'published') else datetime.datetime.now().isoformat(),
-                                'summary': summary,
-                                'source': source
-                            })
-                            
-                            log(f"Added news item: {title}")
-                    except Exception as e:
-                        log(f"Error processing entry: {str(e)}", "WARNING")
-                        continue
+                        # Add to our news items
+                        self.news_items.append({
+                            'title': title,
+                            'link': entry.link if hasattr(entry, 'link') else "#",
+                            'published': entry.published if hasattr(entry, 'published') else datetime.datetime.now().isoformat(),
+                            'summary': summary,
+                            'source': source
+                        })
                         
             except Exception as e:
                 log(f"Error fetching feed {feed_url}: {str(e)}", "WARNING")
                 continue
         
-        log(f"Fetched {len(self.news_items)} AI news items")
-        
-        # If we got fewer than 5 news items, add some fallbacks
+        # If we didn't get enough news, add fallbacks
         if len(self.news_items) < 5:
             log("Adding fallback news items")
             self.add_fallback_news()
         
         # Sort by publication date, newest first
         self.news_items.sort(key=lambda x: x['published'], reverse=True)
+        log(f"Collected {len(self.news_items)} news items")
         
     def add_fallback_news(self):
-        """Add fallback news items if we didn't get enough from feeds."""
+        """Add fallback news items."""
         fallback_news = [
             {
                 'title': "OpenAI Makes ChatGPT Plus Free for Students",
@@ -203,77 +155,73 @@ class SimpleNewsletterAgent:
                 'published': datetime.datetime.now().isoformat(),
                 'summary': "Spotify introduced new Gen AI Ads for creating scripts and voiceovers at no extra cost to advertisers. The tool aims to streamline the ad creation process for podcasts and audio content.",
                 'source': "TechCrunch"
+            },
+            {
+                'title': "Runway Raises $308M for AI Video Generation",
+                'link': "https://techcrunch.com/runway-funding",
+                'published': datetime.datetime.now().isoformat(),
+                'summary': "Runway, the startup behind popular text-to-video and image-to-video generation tools, has raised $308 million in new funding at a $1.8 billion valuation to continue developing its AI video technology.",
+                'source': "TechCrunch"
             }
         ]
         
-        # Add only as many fallbacks as needed to reach 5 news items
-        needed_fallbacks = max(0, 5 - len(self.news_items))
-        self.news_items.extend(fallback_news[:needed_fallbacks])
+        # Add only as many fallbacks as needed
+        needed = max(0, 5 - len(self.news_items))
+        self.news_items.extend(fallback_news[:needed])
         
     def fetch_ai_tools(self):
-        """Fetch new AI tools from Product Hunt and other sources."""
-        log("Fetching AI tools...")
+        """Add AI tools to feature in the newsletter."""
+        log("Adding AI tools")
         
-        # Skip the actual API calls and just use fallback tools to avoid potential issues
-        log("Using fallback AI tools")
-        self.add_fallback_tools()
-        
-        # Shuffle the tools for variety
-        random.shuffle(self.ai_tools)
-        
-    def add_fallback_tools(self):
-        """Add fallback AI tools."""
-        fallback_tools = [
+        # Use predefined tools instead of trying to scrape
+        tools = [
             {
                 'name': 'Claude 3.7',
                 'link': 'https://claude.ai',
-                'description': 'Anthropic\'s most advanced AI assistant with enhanced reasoning capabilities and improved context window, now with 200K tokens.'
+                'description': 'Anthropic\'s most advanced AI assistant with enhanced reasoning capabilities and improved context window.'
             },
             {
                 'name': 'Midjourney v7',
                 'link': 'https://midjourney.com',
-                'description': 'Create stunning photorealistic images with the latest text-to-image model featuring improved composition, lighting, and prompt understanding.'
+                'description': 'Create stunning photorealistic images with the latest text-to-image model featuring improved composition and lighting.'
             },
             {
                 'name': 'Supaboard',
                 'link': 'https://supaboard.co',
-                'description': 'Transform complex data into instant dashboards and actionable insights with natural language queries and AI-powered visualization recommendations.'
+                'description': 'Transform complex data into instant dashboards and actionable insights with natural language queries.'
             },
             {
                 'name': 'Vapi',
                 'link': 'https://vapi.ai',
-                'description': 'Create voice AI agents that sound natural, handle complex calls, and integrate with your existing tools. Now offering 50+ realistic voice options.'
+                'description': 'Create voice AI agents that sound natural, handle complex calls, and integrate with your existing tools.'
             },
             {
                 'name': 'Adaptive',
                 'link': 'https://adaptive.security',
-                'description': 'Protect your organization from GenAI social engineering attacks by simulating deepfake security threats and training your team to identify them.'
+                'description': 'Protect your organization from GenAI social engineering attacks with deepfake security simulations.'
             },
             {
                 'name': 'Mem AI',
                 'link': 'https://mem.ai',
-                'description': 'Your AI-powered second brain that automatically organizes notes, generates summaries, and surfaces relevant information when you need it.'
+                'description': 'Your AI-powered second brain that automatically organizes notes and surfaces relevant information.'
             },
             {
                 'name': 'Cursor',
                 'link': 'https://cursor.sh',
-                'description': 'The AI-first code editor that helps you understand, edit, and generate code faster with a built-in programming assistant.'
+                'description': 'The AI-first code editor that helps you understand, edit, and generate code faster with a built-in assistant.'
             }
         ]
         
-        # Use all the fallback tools
-        self.ai_tools = fallback_tools
+        # Shuffle and use 5 random tools
+        random.shuffle(tools)
+        self.ai_tools = tools[:5]
+        log(f"Added {len(self.ai_tools)} AI tools")
     
-    def fetch_youtube_video(self):
-        """Fetch a trending AI YouTube video with better error handling."""
-        log("Using fallback YouTube video")
-        self.use_fallback_video()
+    def add_youtube_recommendation(self):
+        """Add YouTube video recommendation."""
+        log("Adding YouTube recommendation")
         
-    def use_fallback_video(self):
-        """Use fallback video if fetching fails."""
-        log("Using fallback YouTube video")
-        
-        fallback_videos = [
+        videos = [
             {
                 'title': "The Future of AI: 2025 Predictions",
                 'link': "https://www.youtube.com/watch?v=rQJmDWB9Zwk",
@@ -296,11 +244,13 @@ class SimpleNewsletterAgent:
             }
         ]
         
-        self.youtube_video = random.choice(fallback_videos)
-        log(f"Selected fallback video: {self.youtube_video['title']}")
+        self.youtube_video = random.choice(videos)
+        log(f"Selected video: {self.youtube_video['title']}")
         
     def generate_insights(self):
         """Generate interesting insights for the newsletter."""
+        log("Generating insights")
+        
         insights = [
             "Half of OpenAI's security team recently quit over internal disagreements about safety protocols.",
             "Legal scholars are now arguing that training AI on pirated content should qualify as 'fair use' under copyright law.",
@@ -316,216 +266,253 @@ class SimpleNewsletterAgent:
             "Research shows multilingual AI models consistently outperform monolingual ones, even for English-only tasks."
         ]
         
-        # Shuffle the list and return it
+        # Shuffle and return 4 random insights
         random.shuffle(insights)
-        return insights[:5]  # Return only 5 insights
+        return insights[:4]
+    
+    def generate_prompt_tip(self):
+        """Generate a helpful prompt tip for Claude/ChatGPT users."""
+        log("Generating prompt tip")
         
-    def format_newsletter_content(self):
-        """Format the content for the Return of the Jed(AI) newsletter."""
+        prompts = [
+            {
+                "intro": "**Mastering Claude 3.7's Reasoning**",
+                "prompt": "Please analyze [topic/problem] step by step. First outline your approach, then work through each step showing your reasoning. Consider at least 3 different perspectives before reaching your conclusion.",
+                "explanation": "This structured prompt activates Claude's deeper reasoning capabilities, encouraging methodical analysis rather than rushing to conclusions."
+            },
+            {
+                "intro": "**Unleash Creative Writing with Claude**",
+                "prompt": "I need a creative story about [topic]. Before writing, create a character profile with background, motivations, and flaws. Then outline a 3-act structure with conflict and resolution. Now write the story incorporating these elements.",
+                "explanation": "This prompt forces Claude to plan before executing, resulting in richer characters and more coherent plots."
+            },
+            {
+                "intro": "**Turn Claude into a Coding Tutor**",
+                "prompt": "Act as a coding mentor teaching me [language/concept]. First explain the core concept in simple terms with an analogy. Then show a basic code example. Finally, give me a simple exercise to try, with its solution hidden below.",
+                "explanation": "Perfect for learning programming concepts step-by-step with the right amount of challenge."
+            },
+            {
+                "intro": "**Supercharge Your Research**",
+                "prompt": "I'm researching [topic]. First, identify 3 distinct perspectives on this issue. Then for each perspective: 1) Summarize their core arguments, 2) Note their strongest evidence, 3) Identify potential weaknesses, and 4) List key scholars/sources associated with this view.",
+                "explanation": "This structured approach helps ensure more balanced, thorough research summaries."
+            },
+            {
+                "intro": "**Claude's Fact-Checking Mode**",
+                "prompt": "Please fact check each claim in the above output against reliable sources. Assume there are mistakes, so don't stop until you've checked every fact and found all mistakes.",
+                "explanation": "Once you prompt it, click the diagonal arrow next to the thinking dialogue box to expand its thoughts, and you can watch as it meticulously combs through each fact."
+            }
+        ]
+        
+        # Pick a random prompt tip
+        return random.choice(prompts)
+        
+    def format_newsletter(self):
+        """Format the Return of the Jed(AI) newsletter content."""
         log("Formatting newsletter content")
         
-        # Random emoji selection for sections
-        emoji = lambda category: random.choice(EMOJIS.get(category, ["✨"]))
+        # Get a random emoji for each section
+        headline_emoji = random.choice(EMOJIS["headline"])
+        tools_emoji = random.choice(EMOJIS["tools"])
+        news_emoji = random.choice(EMOJIS["news"])
+        video_emoji = random.choice(EMOJIS["video"])
+        insights_emoji = random.choice(EMOJIS["insights"])
+        welcome_emoji = random.choice(EMOJIS["welcome"])
+        prompt_emoji = random.choice(EMOJIS["prompt"])
         
-        # Format the newsletter as plain text with minimal formatting
-        formatted_content = f"""RETURN OF THE JED(AI): AI NEWSLETTER
-{self.today}
-
-👋 WELCOME, HUMANS!
-
-Hope your algorithms are optimized and your neural networks are firing on all nodes today!
-Today we're diving into the latest AI happenings across the galaxy.
-Let's jump to hyperspace!
-
-----------------------------
-📰 TODAY'S MAIN STORY
-----------------------------
-
-"""
-        
-        # Add the main story (first news item)
+        # Generate a catchy headline based on top news
         if self.news_items:
             main_story = self.news_items[0]
-            story_title = main_story['title']
-            
-            formatted_content += f"{story_title}\n\n"
-            
-            # Add summary
-            story_content = main_story.get('summary', 'No details available.')
-                
-            formatted_content += f"{story_content}\n\n"
-            formatted_content += f"Source: {main_story.get('source', 'Unknown')}\n"
-            formatted_content += f"Read more: {main_story.get('link', '')}\n\n"
+            headline = f"{headline_emoji} {main_story['title']}"
+            subheading = "PLUS: The AI tools reshaping how we work & create"
+        else:
+            headline = f"{headline_emoji} AI's Wild Week: Breakthroughs, Breakdowns & Innovations"
+            subheading = "PLUS: Claude prompts you're not using yet"
         
-        # Add prompt tip section
-        formatted_content += f"""----------------------------
-{emoji('prompt')} PROMPT TIP OF THE DAY
-----------------------------
-
-Expert Mode Reasoning with Claude 3.7
-
-"Please analyze [topic/problem] step by step. First outline your approach, then work through each step showing your reasoning. Consider at least 3 different perspectives or methods before reaching your conclusion."
-
-Why it works: This structured prompt activates Claude's deeper reasoning capabilities, encouraging methodical analysis rather than rushing to conclusions.
-
-----------------------------
-{emoji('tools')} AI TOOL SPOTLIGHT
-----------------------------
-
-"""
-        
-        # Add 3-5 AI tools
-        tool_count = min(5, len(self.ai_tools))
-        for i in range(tool_count):
-            tool = self.ai_tools[i]
-            formatted_content += f"* {tool['name']} → {tool['description']}\n  Link: {tool['link']}\n\n"
-            
-        formatted_content += f"""----------------------------
-{emoji('news')} AROUND THE HORN: QUICK HITS
-----------------------------
-
-"""
-        
-        # Add secondary news items as quick hits
-        for i, news in enumerate(self.news_items[1:6]):  # Use items 2-6 (skipping the main story)
-            source = news.get('source', 'Unknown')
-            title_text = news['title']
-            # Truncate if too long
-            if len(title_text) > 80:
-                title_text = title_text[:77] + "..."
-            formatted_content += f"* {source}: {title_text}\n  Link: {news.get('link', '')}\n\n"
-            
-        # Add YouTube recommendation
-        if self.youtube_video:
-            formatted_content += f"""----------------------------
-{emoji('video')} WATCH THIS: YOUTUBE PICK
-----------------------------
-
-{self.youtube_video['title']} by {self.youtube_video['channel']}
-Link: {self.youtube_video['link']}
-
-"""
-            
-        # Add interesting insights section
+        # Get insights
         insights = self.generate_insights()
-        formatted_content += f"""----------------------------
-{emoji('insights')} NEURAL FIRINGS: INTERESTING INSIGHTS
-----------------------------
+        
+        # Get prompt tip
+        prompt_tip = self.generate_prompt_tip()
+        
+        # Build the newsletter content in markdown format
+        newsletter = f"""# Return of the Jed(AI) - {self.today}
 
+## {headline}
+
+### {subheading}
+
+---
+
+## {welcome_emoji} Welcome, fellow humans!
+
+Hope your algorithms are optimized and your neural nets are firing on all nodes today.
+
+Let's dive into the latest from the AI universe—where the machines are learning faster, 
+but we're still the ones asking the important questions.
+
+---
+
+## 📰 Main Story
 """
         
-        for insight in insights:
-            formatted_content += f"* {insight}\n\n"
+        # Add main article (first news item)
+        if self.news_items:
+            main_news = self.news_items[0]
+            company = main_news['source']
             
-        # Add closing and CTA
-        formatted_content += f"""----------------------------
-👋 THAT'S ALL, FOLKS!
-----------------------------
+            newsletter += f"""
+### 🚀 {main_news['title']}
 
-That's all for today, humans. May your data be clean and your models well-tuned.
+{main_news['summary']}
 
-The best way to support this newsletter? Share it with a fellow tech enthusiast!
+**Why it matters**: This development could reshape how we interact with AI in everyday applications.
 
-[Subscribe] | [Visit our site] | [Share with a friend]
+[Read the full story →]({main_news['link']})
 
-🦾 RETURN OF THE JED(AI) 🦾
+---
 """
         
-        return formatted_content
+        # Add prompt tip
+        newsletter += f"""
+## {prompt_emoji} Prompt Magic of the Day
+
+{prompt_tip['intro']}
+
+Try this prompt:
+
+```
+{prompt_tip['prompt']}
+```
+
+{prompt_tip['explanation']}
+
+---
+"""
         
-    def update_google_doc(self):
-        """Update the Google Doc with the formatted newsletter content."""
-        log("Updating Google Doc with newsletter content")
+        # Add AI tools section
+        newsletter += f"""
+## {tools_emoji} AI Toolkit: New & Noteworthy
+
+"""
+        # Include tools with formatting
+        for tool in self.ai_tools:
+            newsletter += f"- **{tool['name']}** → {tool['description']}\n"
+        
+        newsletter += """
+[Explore all tools →](https://returnofthejedai.com/tools)
+
+---
+"""
+        
+        # Add quick hits section
+        newsletter += f"""
+## {news_emoji} Around the Horn (Quick Hits)
+
+"""
+        # Use the next 4 news items for quick hits
+        for news in self.news_items[1:5]:
+            newsletter += f"- **{news['source']}**: {news['title']}\n"
+        
+        # Add YouTube video recommendation
+        if self.youtube_video:
+            newsletter += f"""
+---
+
+## {video_emoji} This Week in AI (Video Pick)
+
+**{self.youtube_video['title']}** from {self.youtube_video['channel']}
+
+[Watch Now →]({self.youtube_video['link']})
+
+---
+"""
+        
+        # Add intelligent insights section
+        newsletter += f"""
+## {insights_emoji} Intelligent Insights
+
+"""
+        for insight in insights:
+            newsletter += f"- {insight}\n"
+        
+        # Add final CTA
+        newsletter += """
+---
+
+## 📣 That's a wrap!
+
+Thanks for reading! The best way to support us is by sharing this newsletter with a friend.
+
+👉 [Subscribe] | [Visit our site] | [Explore AI tools]
+
+"""
+        return newsletter
+        
+    def update_google_doc(self, content):
+        """Update the Google Doc with the newsletter content."""
+        log("Updating Google Doc")
         
         try:
-            # Format the newsletter content
-            formatted_content = self.format_newsletter_content()
+            # First get the document to check current content
+            document = self.docs_service.documents().get(documentId=self.doc_id).execute()
             
-            # First, check the current document
-            try:
-                document = self.docs_service.documents().get(documentId=self.doc_id).execute()
-                log(f"Retrieved document: '{document.get('title', 'Untitled')}'")
-                
-                # Get the document length to clear it properly
-                doc_length = 1  # Default
-                if 'body' in document and 'content' in document['body']:
-                    # Get the document length
-                    doc_length = document['body']['content'][-1].get('endIndex', 1)
-                    log(f"Document length: {doc_length} characters")
-                
-                # Create a simple update request - just replacing the content
-                requests = []
-                
-                # If document has content, clear it first
-                if doc_length > 1:
-                    requests.append({
-                        'deleteContentRange': {
-                            'range': {
-                                'startIndex': 1,
-                                'endIndex': doc_length
-                            }
-                        }
-                    })
-                    
-                # Insert the formatted content as plain text
-                requests.append({
+            # Create a request to update the document
+            requests = [
+                {
                     'insertText': {
                         'location': {
-                            'index': 1
+                            'index': 1  # Insert at beginning of doc
                         },
-                        'text': formatted_content
+                        'text': content
                     }
-                })
-                
-                # Execute the batch update
-                result = self.docs_service.documents().batchUpdate(
-                    documentId=self.doc_id,
-                    body={'requests': requests}
-                ).execute()
-                
-                log("Document updated successfully")
-                return True
-                
-            except Exception as e:
-                log(f"Error getting or updating document: {str(e)}", "ERROR")
-                traceback.print_exc()
-                return False
-                
-        except Exception as e:
-            log(f"Error formatting newsletter content: {str(e)}", "ERROR")
-            traceback.print_exc()
-            return False
+                }
+            ]
             
+            # Execute the update
+            result = self.docs_service.documents().batchUpdate(
+                documentId=self.doc_id,
+                body={'requests': requests}
+            ).execute()
+            
+            log("Google Doc updated successfully")
+            return True
+            
+        except Exception as e:
+            log(f"Error updating document: {str(e)}", "ERROR")
+            return False
+    
     def run(self):
         """Run the complete newsletter generation process."""
-        log("Starting Newsletter Agent...")
+        log("Starting Return of the Jed(AI) Newsletter Agent")
         
         try:
-            # Fetch content
+            # Fetch all content
             self.fetch_ai_news()
             self.fetch_ai_tools()
-            self.fetch_youtube_video()
+            self.add_youtube_recommendation()
             
-            # Update Google Doc with formatted content
-            success = self.update_google_doc()
+            # Format the newsletter
+            newsletter_content = self.format_newsletter()
+            
+            # Update the Google Doc
+            success = self.update_google_doc(newsletter_content)
             
             if success:
-                log("Newsletter updated successfully!")
+                log("Newsletter generation and update completed successfully!")
                 return {
                     "status": "success",
                     "timestamp": datetime.datetime.now().isoformat(),
-                    "articles_found": len(self.news_items),
-                    "tools_found": len(self.ai_tools)
+                    "message": "Newsletter updated successfully"
                 }
             else:
-                log("Failed to update newsletter.", "ERROR")
+                log("Failed to update newsletter", "ERROR")
                 return {
                     "status": "error",
-                    "timestamp": datetime.datetime.now().isoformat()
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "message": "Failed to update Google Doc"
                 }
+                
         except Exception as e:
             log(f"Error in newsletter generation process: {str(e)}", "ERROR")
-            traceback.print_exc()
             return {
                 "status": "error",
                 "message": str(e),
@@ -534,6 +521,13 @@ The best way to support this newsletter? Share it with a fellow tech enthusiast!
 
 # Main execution
 if __name__ == "__main__":
-    agent = SimpleNewsletterAgent()
-    result = agent.run()
-    print(json.dumps(result))
+    try:
+        agent = NewsletterAgent()
+        result = agent.run()
+        print(json.dumps(result, indent=2))
+    except Exception as e:
+        print(json.dumps({
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.datetime.now().isoformat()
+        }, indent=2))

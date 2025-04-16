@@ -1,21 +1,21 @@
 # Return of the Jed(AI) Newsletter Agent
 
-An automated agent that gathers the latest AI news and updates a Google Doc daily for the "Return of the Jed(AI)" newsletter.
+An automated agent that gathers the latest AI news and updates a Google Doc daily with the "Return of the Jed(AI)" newsletter.
 
 ## Features
 
 - 🔍 Scrapes latest AI news from Google News RSS feeds
-- 🛠️ Finds trending AI tools from Product Hunt
-- 🎬 Discovers AI-related YouTube videos
-- 📝 Formats content according to the newsletter template
+- 🛠️ Features trending AI tools 
+- 🎬 Includes AI-related YouTube video recommendations
+- 📝 Formats content according to a pop-culture inspired newsletter template
 - 📄 Updates a Google Doc automatically via the Google Docs API
-- ⏱️ Runs daily via GitHub Actions
+- ⏱️ Runs daily via GitHub Actions (completely free)
 
 ## How It Works
 
-1. **Content Collection**: The agent gathers content from free sources including Google News RSS feeds, Product Hunt, and YouTube.
-2. **Content Processing**: It summarizes news articles, formats content in a consistent style, and adds engaging section headers.
-3. **Document Update**: The formatted newsletter content is written to a Google Doc that you own and have shared with the service account.
+1. **Content Collection**: The agent gathers content from free sources including Google News RSS feeds.
+2. **Content Processing**: It formats news articles, AI tools, and insights into a consistent, engaging style.
+3. **Document Update**: The formatted newsletter content is written to your Google Doc.
 4. **Automation**: Everything runs on a schedule via GitHub Actions, with no server costs.
 
 ## Setup Instructions
@@ -57,20 +57,20 @@ An automated agent that gathers the latest AI news and updates a Google Doc dail
 
 ### Step 3: Set Up GitHub Repository
 
-1. Fork this repository or create a new one with these files
+1. Create a new repository with these files
 2. Add the following secrets in your repository settings:
    - `GOOGLE_CREDENTIALS`: The entire contents of your service account JSON key file
    - `DOCUMENT_ID`: The ID of your Google Doc
 
 To add secrets:
 - Go to your repository on GitHub
-- Click "Settings" > "Secrets" > "Actions"
+- Click "Settings" > "Secrets and variables" > "Actions"
 - Click "New repository secret"
 - Add each secret with its name and value
 
 ### Step 4: Configure and Deploy
 
-1. Update any settings in `enhanced_newsletter_agent.py` if desired
+1. Update any settings in `updated_newsletter_agent.py` if desired
 2. The GitHub Actions workflow will run automatically at the scheduled time (7 AM UTC by default)
 3. You can also trigger it manually via the Actions tab
 
@@ -92,14 +92,6 @@ export GOOGLE_CREDENTIALS='{"type":"service_account",...}'  # Your service accou
 export DOCUMENT_ID='your-doc-id'
 python debug_auth.py
 ```
-
-### Missing Content
-
-If the document is being updated but the content is incomplete:
-
-1. Check the GitHub Actions logs for any errors
-2. Try running the enhanced newsletter agent locally to debug
-3. The agent has fallback content if APIs fail, so you'll always get something
 
 ### GitHub Actions Not Running
 
@@ -129,39 +121,18 @@ export DOCUMENT_ID='your-doc-id'
 python debug_auth.py
 
 # Run the agent
-python enhanced_newsletter_agent.py
+python updated_newsletter_agent.py
 ```
 
 ## Customization
 
 You can customize the agent by:
 
-- Modifying the `format_newsletter_content()` method for a different newsletter layout
+- Modifying the `format_newsletter()` method for a different newsletter layout
 - Adding or changing the news sources in `fetch_ai_news()`
-- Updating the AI tools sources in `fetch_ai_tools()`
-- Adding more YouTube channels in `fetch_youtube_video()`
+- Updating the AI tools in `fetch_ai_tools()`
+- Adding more YouTube channels in `add_youtube_recommendation()`
 - Changing the schedule in the GitHub Actions workflow file
-
-## Free Tier Limitations and Solutions
-
-This implementation uses free APIs and services, with some limitations:
-
-- **Google News RSS**: Limited to what's available in the feed
-  - Solution: The agent has fallback content if the feed fails
-- **Summarization Model**: Runs locally, which can be slow
-  - Solution: Using a lightweight model and limiting input length
-- **YouTube Video Discovery**: Basic without the YouTube API
-  - Solution: Using regular expressions to find videos from popular channels
-- **Product Hunt Parsing**: Simplified without their API
-  - Solution: Using their RSS feed with fallback options
-
-## Next Steps for Improvement
-
-- Add more news sources (free RSS feeds)
-- Improve content formatting with better templates
-- Add image extraction for more visual content
-- Implement better error handling and recovery
-- Add monitoring or notification of successful runs
 
 ## License
 
