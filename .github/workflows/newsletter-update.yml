@@ -47,11 +47,9 @@ jobs:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         DOCUMENT_ID: ${{ secrets.DOCUMENT_ID }}
         GITHUB_RUN_ID: ${{ github.run_id }}
-        # Enable verbose logging
-        PYTHONVERBOSE: 1
       run: |
         echo "Running newsletter agent..."
-        python newsletter_agent.py
+        python simple_newsletter_agent.py
       
     - name: Record run outcome
       run: |
@@ -62,3 +60,4 @@ jobs:
       with:
         commit_message: "Update newsletter run log"
         file_pattern: last_run.log
+        github_token: ${{ secrets.GITHUB_TOKEN }}
