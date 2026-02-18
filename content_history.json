@@ -1,4 +1,85 @@
 {
-  "published_titles": {},
-  "last_updated": null
+  "published_titles": {
+    "58749ba6a401b1eba7d555ea55d6ce78": {
+      "title": "Machine Learning Links Insulin Resistance to 12 Cancers",
+      "category": "news",
+      "date": "2026-02-18T07:48:15.289075"
+    },
+    "fc06c75a5e3b926c40d3711decbe6bdb": {
+      "title": "Mesa taking big leap on artificial intelligence",
+      "category": "news",
+      "date": "2026-02-18T07:48:15.289086"
+    },
+    "5e396e83ba22bdc1de66ee173a07cc68": {
+      "title": "U.S. court bars OpenAI from using \u2018Cameo\u2019",
+      "category": "news",
+      "date": "2026-02-18T07:48:15.289093"
+    },
+    "f62f0e575fc18e5263ecb11c4a642342": {
+      "title": "ChatGPT caricature trend: What to do if OpenAI clearly knows too much",
+      "category": "news",
+      "date": "2026-02-18T07:48:15.289096"
+    },
+    "272af813893567a99776512db3f82b45": {
+      "title": "Wall Street Says This Artificial Intelligence (AI) Stock Is a Bargain Hiding in Plain Sight",
+      "category": "news",
+      "date": "2026-02-18T07:48:15.289100"
+    },
+    "7728164baf4ed652aee6dbf9edc562de": {
+      "title": "Synra",
+      "category": "tool",
+      "date": "2026-02-18T07:48:15.289104"
+    },
+    "4f68b69589dc047ff16232ce31af1068": {
+      "title": "Subterranean",
+      "category": "tool",
+      "date": "2026-02-18T07:48:15.289108"
+    },
+    "c33213dee4b50a3e03575cf1a31b64e6": {
+      "title": "claude-devtools",
+      "category": "tool",
+      "date": "2026-02-18T07:48:15.289114"
+    },
+    "65f3c7acf838905ddd03139956e383a7": {
+      "title": "Vela",
+      "category": "tool",
+      "date": "2026-02-18T07:48:15.289119"
+    },
+    "183ac735eab7c42d0e357060486fa0e3": {
+      "title": "Boost.space v5",
+      "category": "tool",
+      "date": "2026-02-18T07:48:15.289123"
+    },
+    "365a97be8f9ccef2a4e2dde1c69febde": {
+      "title": "How Claude Changes Everything",
+      "category": "video",
+      "date": "2026-02-18T07:48:15.289126"
+    },
+    "eaff77a1ee3ad5193bfce1105bea42c9": {
+      "title": "Natively Adaptive Interfaces: A new framework for AI accessibility",
+      "category": "insight",
+      "date": "2026-02-18T07:48:15.289131"
+    },
+    "62805ff68a991e213e2dd4e0c1a26f1d": {
+      "title": "Anthropic releases Sonnet 4.6",
+      "category": "insight",
+      "date": "2026-02-18T07:48:15.289134"
+    },
+    "34dd1532b231b78d68001ca0cfe7a90d": {
+      "title": "Apple is reportedly cooking up a trio of AI wearables",
+      "category": "insight",
+      "date": "2026-02-18T07:48:15.289137"
+    },
+    "6d2e52f22a37fae33adf2755ebc02408": {
+      "title": "9 fun questions to try asking Google Photos",
+      "category": "insight",
+      "date": "2026-02-18T07:48:15.289141"
+    },
+    "ea88a51d9c1c7877ff5d8f65abbd3b43": {
+      "title": "Mastering Step-by-Step Reasoning",
+      "category": "prompt_tip",
+      "date": "2026-02-18T07:48:15.289144"
+    }
+  },
+  "last_updated": "2026-02-18T07:48:15.289162"
 }
