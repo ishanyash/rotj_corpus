@@ -399,7 +399,87 @@
       "title": "AI Fact-Checking Mode",
       "category": "prompt_tip",
       "date": "2026-02-22T07:33:10.307719"
+    },
+    "2a092736e3627ebd7bc4969d294757e9": {
+      "title": "Machine Learning Helps Solve Central Problem Of Quantum Chemistry",
+      "category": "news",
+      "date": "2026-02-23T07:52:14.885802"
+    },
+    "54739c6e140e67e5ddc9eb9eb58d9711": {
+      "title": "Anthropic Rolls Out Autonomous Vulnerability-Hunting AI Tool for Claude Code",
+      "category": "news",
+      "date": "2026-02-23T07:52:14.885813"
+    },
+    "c4aa1a1fe07dd3ed1c416f14bace6be9": {
+      "title": "OpenClaw founder Peter Steinberger joins OpenAI",
+      "category": "news",
+      "date": "2026-02-23T07:52:14.885817"
+    },
+    "f3a883e4c44cdbf6ae5f1dfbfb2a732f": {
+      "title": "Inside OpenAI\u2019s Scramble to Get Computing Power After Stargate Stalled",
+      "category": "news",
+      "date": "2026-02-23T07:52:14.885824"
+    },
+    "ac4b43e7983e229f9b67054333cc69a4": {
+      "title": "Anthropic Jolts Cybersecurity Stocks, JFrog After Finance, Health Care, Legal Drama",
+      "category": "news",
+      "date": "2026-02-23T07:52:14.885827"
+    },
+    "26aada2cc7d83458be5e67f4e643b069": {
+      "title": "Claude in PowerPoint",
+      "category": "tool",
+      "date": "2026-02-23T07:52:14.885832"
+    },
+    "727e7d7c36a0d7c9f8b385ee60e6c4cb": {
+      "title": "Straion",
+      "category": "tool",
+      "date": "2026-02-23T07:52:14.885837"
+    },
+    "355c6cf4c5db37b201aaec2bffb4358d": {
+      "title": "Architect by Lyzr",
+      "category": "tool",
+      "date": "2026-02-23T07:52:14.885843"
+    },
+    "4d26f924a9d721677bff00a2dc89b410": {
+      "title": "trnscrb",
+      "category": "tool",
+      "date": "2026-02-23T07:52:14.885848"
+    },
+    "d036d69899ba92b6a9c555a40afd5584": {
+      "title": "AgentReady",
+      "category": "tool",
+      "date": "2026-02-23T07:52:14.885851"
+    },
+    "1f38298402d5b1d00586e21815b8ebe6": {
+      "title": "AI Tools That Will Blow Your Mind",
+      "category": "video",
+      "date": "2026-02-23T07:52:14.885856"
+    },
+    "2478bfcc6aeb2f51bda69a81f3f511da": {
+      "title": "Google VP warns that two types of AI startups may not survive",
+      "category": "insight",
+      "date": "2026-02-23T07:52:14.885860"
+    },
+    "90acbd89d2ea35ca1a034014fa85acd9": {
+      "title": "Microsoft\u2019s new gaming CEO vows not to flood the ecosystem with \u2018endless AI slop\u2019",
+      "category": "insight",
+      "date": "2026-02-23T07:52:14.885865"
+    },
+    "5d8d4ea97c663cb4f7357afcf41da7cf": {
+      "title": "Sam Altman would like to remind you that humans use a lot of energy, too",
+      "category": "insight",
+      "date": "2026-02-23T07:52:14.885868"
+    },
+    "50e521262ee4d9b883896a88f433255a": {
+      "title": "6 days left to lock in the lowest TechCrunch Disrupt 2026 rates",
+      "category": "insight",
+      "date": "2026-02-23T07:52:14.885872"
+    },
+    "f6983068246e44d4ec87b9330988084d": {
+      "title": "The 'Explain Like I'm Five' Ladder",
+      "category": "prompt_tip",
+      "date": "2026-02-23T07:52:14.885875"
     }
   },
-  "last_updated": "2026-02-22T07:33:10.307743"
+  "last_updated": "2026-02-23T07:52:14.885906"
 }
