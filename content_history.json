@@ -639,7 +639,87 @@
       "title": "Code Review Like a Senior Engineer",
       "category": "prompt_tip",
       "date": "2026-02-25T07:49:48.480442"
+    },
+    "9e8c03409362793c81ef9240b150243b": {
+      "title": "An update on our model deprecation commitments for Claude Opus 3",
+      "category": "news",
+      "date": "2026-02-26T07:49:45.153661"
+    },
+    "92195607b5402ab3f53b681955717b76": {
+      "title": "Riley Walz, the Jester of Silicon Valley, Is Joining OpenAI",
+      "category": "news",
+      "date": "2026-02-26T07:49:45.153673"
+    },
+    "11d27a8506f1f8f4ef0a34e10afd9f15": {
+      "title": "Mixing generative AI with physics to create personal items that work in the real world",
+      "category": "news",
+      "date": "2026-02-26T07:49:45.153677"
+    },
+    "935bc62586295c1c45709a3a6cc4a001": {
+      "title": "Canada\u2019s AI minister blames OpenAI for \u2018failure\u2019 after mass shooting",
+      "category": "news",
+      "date": "2026-02-26T07:49:45.153684"
+    },
+    "80ff3c33f77f85bd5657e7c03a88c635": {
+      "title": "Is Claude Down? Outage Reports Briefly Spike For Anthropic\u2019s AI",
+      "category": "news",
+      "date": "2026-02-26T07:49:45.153688"
+    },
+    "be54298f9bfd9a986a9ff30b1857031c": {
+      "title": "Ask Fellow",
+      "category": "tool",
+      "date": "2026-02-26T07:49:45.153692"
+    },
+    "e5affe5b49db210ce999f7da1f85428e": {
+      "title": "Thinglo",
+      "category": "tool",
+      "date": "2026-02-26T07:49:45.153695"
+    },
+    "a753c3945400cd54c7ffd35fc07fe031": {
+      "title": "Orca",
+      "category": "tool",
+      "date": "2026-02-26T07:49:45.153702"
+    },
+    "e64ad20d319b78bd6a914c49268f572b": {
+      "title": "Notion Custom Agents",
+      "category": "tool",
+      "date": "2026-02-26T07:49:45.153707"
+    },
+    "35a234a44d1c5339d34d878750abf274": {
+      "title": "Arzule",
+      "category": "tool",
+      "date": "2026-02-26T07:49:45.153710"
+    },
+    "6a68814e76c9375decc3fcfb945e91db": {
+      "title": "The Math Behind Neural Networks",
+      "category": "video",
+      "date": "2026-02-26T07:49:45.153714"
+    },
+    "1c2b67fefca1a79bebd2a6eac8667414": {
+      "title": "Gushwork bets on AI search for customer leads \u2014 and early results are emerging",
+      "category": "insight",
+      "date": "2026-02-26T07:49:45.153720"
+    },
+    "6216b055a987b7916bab5b0f4a79ded4": {
+      "title": "Anthropic acquires computer-use AI startup Vercept after Meta poached one of its founders",
+      "category": "insight",
+      "date": "2026-02-26T07:49:45.153723"
+    },
+    "2fee8269f7a67d73ee050ebf64d5a77c": {
+      "title": "A more intelligent Android on Samsung Galaxy S26",
+      "category": "insight",
+      "date": "2026-02-26T07:49:45.153726"
+    },
+    "9b5767a98c33582b46ad7fd91c73a194": {
+      "title": "The White House wants AI companies to cover rate hikes. Most have already said they would.",
+      "category": "insight",
+      "date": "2026-02-26T07:49:45.153729"
+    },
+    "ebc26f90e4358a0e85f13a8f8c3124cd": {
+      "title": "The 'Teach Me by Testing Me' Pattern",
+      "category": "prompt_tip",
+      "date": "2026-02-26T07:49:45.153733"
     }
   },
-  "last_updated": "2026-02-25T07:49:48.480473"
+  "last_updated": "2026-02-26T07:49:45.153802"
 }
