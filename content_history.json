@@ -719,7 +719,87 @@
       "title": "The 'Teach Me by Testing Me' Pattern",
       "category": "prompt_tip",
       "date": "2026-02-26T07:49:45.153733"
+    },
+    "1aa4e59e54b48a6bc2aadcd3a091e77f": {
+      "title": "Anthropic rejects Pentagon\u2019s AI demands",
+      "category": "news",
+      "date": "2026-02-27T07:42:46.145782"
+    },
+    "44ae2cd9ada9947824d1b053c8429d65": {
+      "title": "TD Bank continues to develop AI, machine learning tools",
+      "category": "news",
+      "date": "2026-02-27T07:42:46.145791"
+    },
+    "3522acd656ca0c4c64346e6602882fa0": {
+      "title": "HSBC names generative AI a leading investment area",
+      "category": "news",
+      "date": "2026-02-27T07:42:46.145794"
+    },
+    "596c3e1affd1b6e1a004671f229696e0": {
+      "title": "OpenAI enters Silicon Valley with massive lease in Google\u2019s backyard",
+      "category": "news",
+      "date": "2026-02-27T07:42:46.145798"
+    },
+    "d2c2b3de9f26732395e8462deaad31a7": {
+      "title": "Ottley appointed to UN panel on artificial intelligence",
+      "category": "news",
+      "date": "2026-02-27T07:42:46.145801"
+    },
+    "d7b761cddc4ae278dec1f043fce616d2": {
+      "title": "Zavi AI - Voice to Action OS",
+      "category": "tool",
+      "date": "2026-02-27T07:42:46.145804"
+    },
+    "d78bea1e4819f17c6d30aedc829abe99": {
+      "title": "IronClaw",
+      "category": "tool",
+      "date": "2026-02-27T07:42:46.145807"
+    },
+    "cbcc190dc900c756b3adcb2ead9c42cd": {
+      "title": "Tessl",
+      "category": "tool",
+      "date": "2026-02-27T07:42:46.145813"
+    },
+    "e7ca2d8dff81252e695a2851942d39d6": {
+      "title": "Wordwand",
+      "category": "tool",
+      "date": "2026-02-27T07:42:46.145817"
+    },
+    "197ee768a13a892323bad59f24d3053e": {
+      "title": "CodeWords UI",
+      "category": "tool",
+      "date": "2026-02-27T07:42:46.145820"
+    },
+    "fe9cefdef3d377e7e95a3454e7b186d3": {
+      "title": "When open-sourcing your code goes wrong...",
+      "category": "video",
+      "date": "2026-02-27T07:42:46.145824"
+    },
+    "ba508715df52a6afd0fceaf526dbf9fe": {
+      "title": "New method could increase LLM training efficiency",
+      "category": "insight",
+      "date": "2026-02-27T07:42:46.145827"
+    },
+    "7388fbb87eb3781965d720766f064b10": {
+      "title": "Build with Nano Banana 2, our best image generation and editing model",
+      "category": "insight",
+      "date": "2026-02-27T07:42:46.145829"
+    },
+    "cd57ee8dd111bb50a57ddc36584f5770": {
+      "title": "Jack Dorsey just halved the size of Block\u2019s employee base \u2014 and he says your company is next",
+      "category": "insight",
+      "date": "2026-02-27T07:42:46.145833"
+    },
+    "641602752cad94962ee54818e6a8e1c4": {
+      "title": "AI to help researchers see the bigger picture in cell biology",
+      "category": "insight",
+      "date": "2026-02-27T07:42:46.145836"
+    },
+    "0ca662f6df5a2fed1a89968d85f44d3d": {
+      "title": "Decision Matrix Generator",
+      "category": "prompt_tip",
+      "date": "2026-02-27T07:42:46.145839"
     }
   },
-  "last_updated": "2026-02-26T07:49:45.153802"
+  "last_updated": "2026-02-27T07:42:46.145874"
 }
